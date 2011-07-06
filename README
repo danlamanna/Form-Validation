@@ -1,0 +1,130 @@
+Form Validation
+
+This class is designed to let you validate forms much easier, by setting rules, error messages, and letting the form validator do the rest.
+
+Loading the Class
+
+The file must be included, and the class must be instantiated, like so:
+
+include('class.validateForm.php');
+$validateForm = new validateForm();
+Setting Rules
+
+Setting rules is pretty simple with form validation, it takes three arguments, the field name, the formatted name, and the rule (or set of rules seperated with the | (PIPE).
+$validateForm->setRule('username', 'Username', 'required|min_length[3]');
+$validateForm->setRule('email',    'Email Address', 'required|valid_email');
+In the above example, the $_POST field with the name username will be required upon submission, and must be a minimum length of 3 character, and the email field, will be required, and must be a valid email format. Note: Since the validation only shows one error per field, it shows them in order that they are added in the PIPE seperated string, so the username would show the error message for required, before it shows the error message for not being 3 characters or more.
+Setting Custom Messages
+
+Setting custom error messages is simple, it can be done in two ways:
+1) Setting a message for a rule no matter the field
+$validateForm->setMessage('valid_email', 'Sorry, but we require that you have a valid %1.');
+    
+This sets the valid_email rules error message to that ALWAYS. 
+Or,
+2) You can set a message for a rule specific to a field, for example, if you only wanted the valid_email rule to display "Incorrect" for the secondEmail field:
+$validateForm->setMessage('valid_email', 'secondEmail', 'Incorrect');
+What is %1, %2, etc?
+
+The %1 symbol when used in an error message represents the nicely formatted name you set for that field, if you use %2 in a field that utilizes it, it will replace it with the proper value.
+For example, if you set a custom message for max_length rule, %1 is the nicely formatted field name, and %2 is the amount of characters long the rule is set for.
+Styling Messages
+
+Yes, you can style the error messages a bit, there are two functions that allow you to change the appearance of error messages: 
+setErrorsDelimiter()
+
+This lets you set an open and close tag (or any HTML really) that will be displayed before and after the errors. 
+Example:
+$validateForm->setErrorsDelimiter('<div class="errors">', '</div>');
+setErrorDelimiter()
+
+Unlike setErrorsDelimiter(), this sets an open and close tag for each individual error message.
+$validateForm->setErrorDelimiter('<p class="error">', '</p>');
+The Rules
+
+Rule Name    Description	Example/Notes
+Required	Makes sure a field has a value in it other than ''.	
+Alternatively, you can set the field only to be required if a user defined function evaluates to true:
+
+required[myFunctionName]
+
+Minimum Length	Makes sure a field has a minimum length.	min_length[5]
+Maximum Length	Makes sure a field has a maximum length.	max_length[10]
+Exact Length	Makes sure a field is exactly x characters long.	exact_length[10]
+Valid Email	Makes sure the field is valid email format.	valid_email
+Matches	Makes sure a field matches another field.	matches[password]
+Not Equal To	Makes sure a field doesn't equal another field, or any other value.	not_equal[post:username,dan] (Will return false if the field is equal to dan, or to the value of $_POST[username].
+Depends	Makes sure a field does not validate unless it's depending field passes all rules.	depends[username]
+Callback	Runs the field value through a callback function of your choice.	callback[myValidationFunction]
+Using a Callback
+
+You can use a callback if you're validation is a bit more custom, a good example is checking if a username already exists in your database.
+$validateForm->setRule('username', 'Username', 'callback[usernameExists]');
+
+function usernameExists($postValue) {
+// Make our validate form object available
+global $validateForm;
+
+$checkDatabase = mysql_num_rows(mysql_query("select * from users where username = '{$postValue}'"));
+
+// If the user already exists
+if ($checkDatabase > 0) {
+  $validateForm->setCustomError('username', 'The %1 already exists in our database.');
+  return false;
+} else {
+  return true;
+}
+}
+Example Usage
+
+
+<?php
+
+
+include('class.validateForm.php');
+
+
+$validateForm = new validateForm();
+
+
+$validateForm->setMessage('valid_email', 'Must be a valid %1, yo.');
+
+
+$validateForm->setRule('username', 'Username', 'required');
+
+$validateForm->setRule('email',    'Email Address', 'valid_email|min_length[70]|required');
+
+$validateForm->setRule('testHoneypot', '', 'honeypot');
+
+
+$validateForm->runValidation();
+
+
+?>
+
+
+
+<?php if (!$validateForm->formSuccess()): ?>
+
+
+<?php echo $validateForm->displayErrors(); ?>
+
+
+<form action="" method="post">
+
+username: <input type="text" name="username"><Br />
+
+email:   <input type="text" name="email"><br />
+
+<input type="submit" name="submit" value="Submit">
+
+</form>
+
+
+<?php else: ?>
+
+success
+
+
+<?php endif; ?>
+

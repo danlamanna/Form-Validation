@@ -16,7 +16,8 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * */
+ **/
+ 
 class validateForm {
 
     protected $_formSuccess  = false;
@@ -126,7 +127,7 @@ class validateForm {
         }
 
         if (empty($this->_errorSet) && $this->_forceFail === false) {
-            $this->_formSuccess = TRUE;
+            $this->_formSuccess = true;
         }
         return;
     }
