@@ -5,8 +5,9 @@
  *
  * @package     Form Validation
  * @author      Dan LaManna
- * @link        http://danlamanna.com/form-validation
- *
+ * @link        http://github.com/asdasDan/Form-Validation
+ * @version     0.0.1
+ * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -92,7 +93,7 @@ class validateForm {
      * @return boolean Whether or not the form has been submitted.
      */
     public function formSubmitted() {
-        return ($_SERVER["REQUEST_METHOD"] == "POST") ? true : false;
+        return $_SERVER["REQUEST_METHOD"] == 'POST';
     }
 
     /**
@@ -144,6 +145,27 @@ class validateForm {
 
         $this->_inputLabels[$inputField] = $inputLabel;
 
+        return $this;
+    }
+    
+    /**
+     * Takes an array of rules and uses setRule() to set them, accepts an array
+     * of rule names rather than a pipe-delimited string as well.
+     * @param array $ruleSets 
+     */
+    public function setRules(array $ruleSets) {
+        foreach ($ruleSets as $ruleSet) {
+            $pipeDelimitedRules = null;
+            
+            if (is_array($ruleSet['rules'])) {
+                $pipeDelimitedRules = implode('|', $ruleSet['rules']);
+            } else {
+                $pipeDelimitedRules = $ruleSet['rules'];
+            }
+            
+            $this->setRule($ruleSet['name'], $ruleSet['label'], $pipeDelimitedRules);
+        }
+        
         return $this;
     }
 
@@ -255,17 +277,23 @@ class validateForm {
      * @param boolean $echo Whether or not the values are to be returned or echoed
      * @return string Errors formatted for output
      */
-    public function displayErrors($echo=true) {
+    public function displayErrors($limit=null, $echo=true) {
         list($errorsStart, $errorsEnd) = $this->_allErrorsDelimiter;
         list($errorStart, $errorEnd) = $this->_eachErrorDelimiter;
 
         $errorOutput = $errorsStart;
 
+	$i = 0;
+
         if (!empty($this->_errorSet)) {
             foreach ($this->_errorSet as $fieldName => $error) {
+	    	if ($i == $limit) { break; }
+
                 $errorOutput .= $errorStart;
                 $errorOutput .= $error;
                 $errorOutput .= $errorEnd;
+
+                $i++;
             }
         }
 
@@ -365,7 +393,7 @@ class validateForm {
         // Typecast to array in case it's a string
         $replacements = (array) $replacements;
 
-        for ($i = 1; $i <= count($replacements); $i++) {
+        for ($i = 1, $replacementCount = count($replacements); $i <= $replacementCount; $i++) {
             $key = $i - 1;
             $rulePhrase = str_replace('%' . $i, $replacements[$key], $rulePhrase);
         }
@@ -408,7 +436,6 @@ class validateForm {
      * @return string
      */
     protected function _getLabel($inputName) {
-
         return (array_key_exists($inputName, $this->_inputLabels)) ? $this->_inputLabels[$inputName] : $inputName;
     }
 
@@ -435,6 +462,7 @@ class validateForm {
 
         foreach ($canNotEqual as $doNotEqual) {
             $inputVal = $this->post($inputName);
+            
             if (preg_match('/post:(.*)/', $doNotEqual)) {
                 if ($inputVal == $_POST[str_replace('post:', '', $doNotEqual)]) {
                     $this->_setError($inputName, $ruleName . ',post:key', array($this->_getLabel($inputName), $this->_getLabel(str_replace('post:', '', $doNotEqual))));
@@ -451,6 +479,7 @@ class validateForm {
 
     protected function _validateMatches($inputName, $ruleName, array $ruleArgs) {
         $inputVal = $this->post($inputName);
+        
         if ($inputVal != $_POST[$ruleArgs[1]]) {
             $this->_setError($inputName, $ruleName, array($this->_getLabel($inputName), $this->_getLabel($ruleArgs[1])));
         }
@@ -458,10 +487,12 @@ class validateForm {
 
     protected function _validateValidEmail($inputName, $ruleName, array $ruleArgs) {
         $inputVal = $this->post($inputName);
+        
         if (!preg_match("/^([\w\!\#$\%\&\'\*\+\-\/\=\?\^\`{\|\}\~]+\.)*[\w\!\#$\%\&\'\*\+\-\/\=\?\^\`{\|\}\~]+@((((([a-z0-9]{1}[a-z0-9\-]{0,62}[a-z0-9]{1})|[a-z])\.)+[a-z]{2,6})|(\d{1,3}\.){3}\d{1,3}(\:\d{1,5})?)$/i", $inputVal)) {
             if (!$this->_fieldIsRequired($inputName) && empty($_POST[$inputName])) {
                 break;
             }
+            
             $this->_setError($inputName, $ruleName, $this->_getLabel($inputName));
         }
     }
@@ -483,6 +514,7 @@ class validateForm {
             if (!$this->_fieldIsRequired($inputName) && empty($_POST[$inputName])) {
                 break;
             }
+            
             $this->_setError($inputName, $ruleName, array($this->_getLabel($inputName), $this->_getLabel($ruleArgs[1])));
         }
     }
@@ -494,12 +526,12 @@ class validateForm {
             if (!$this->_fieldIsRequired($inputName) && empty($_POST[$inputName])) {
                 break;
             }
+            
             $this->_setError($inputName, $ruleName, array($this->_getLabel($inputName), $this->_getLabel($ruleArgs[1])));
         }
     }
 
     protected function _validateRequired($inputName, $ruleName, array $ruleArgs) {
-
         $inputVal = $this->post($inputName);
 
         if (array_key_exists(1, $ruleArgs) && function_exists($ruleArgs[1])) {
@@ -508,11 +540,8 @@ class validateForm {
             if ($inputVal == '' && $callbackReturn == true) {
                 $this->_setError($inputName, $ruleName, $this->_getLabel($inputName));
             }
-        } else {
-            if ($inputVal == '') {
+        } elseif ($inputVal == '') {
                 $this->_setError($inputName, $ruleName, $this->_getLabel($inputName));
-            }
         }
     }
-
 }
