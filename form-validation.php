@@ -264,7 +264,7 @@ class validateForm {
                 $returnValue[$key] = $this->post($key, $trim);
             }
         } else {
-            $returnValue = ($trim) ? trim($_POST[$key]) : $_POST[$key];
+            $returnValue = (array_key_exists($key, $_POST)) ? (($trim) ? trim($_POST[$key]) : $_POST[$key]) : false;
         }
 
         return $returnValue;
