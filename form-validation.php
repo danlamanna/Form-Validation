@@ -287,7 +287,7 @@ class validateForm {
 
         if (!empty($this->_errorSet)) {
             foreach ($this->_errorSet as $fieldName => $error) {
-	    	if ($i == $limit) { break; }
+	    	if ($i === $limit) { break; }
 
                 $errorOutput .= $errorStart;
                 $errorOutput .= $error;
